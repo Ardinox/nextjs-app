@@ -37,6 +37,17 @@ export async function POST(request: Request) {
                 existingUserByEmail.verifyCode = verifyCode;
                 existingUserByEmail.verifyCodeExpiry = new Date(Date.now() + 3600000)
                 await existingUserByEmail.save()
+                const emailResponse = await sendVerificationEmail(email, existingUserByEmail.username, verifyCode)
+                if (!emailResponse.success) {
+                    return Response.json({
+                        success: false,
+                        message: emailResponse.message
+                    }, { status: 500 })
+                }
+                return Response.json({
+                    success: true,
+                    message: "Verification code resent. Please verify your email"
+                }, { status: 200 })
             }
         } else {
             const hashedPassword = await bcrypt.hash(password, 10)
@@ -68,8 +79,8 @@ export async function POST(request: Request) {
             }
             return Response.json({
                 success: true,
-                message: "User Registered Successfully. Please verify you email"
-            }, { status: 500 })
+                message: "User Registered Successfully. Please verify your email"
+            }, { status: 201 })
         }
 
     } catch (error) {
